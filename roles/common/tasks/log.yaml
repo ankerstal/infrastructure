@@ -24,6 +24,7 @@
     
   - name: ensure beats installed
     pkgng: name=beats state=present
+    when: filebeat
     
   - name: configure filebeat
     template: src=templates/usr/local/etc/filebeat.yml dest=/usr/local/etc/filebeat.yml mode=0755
