@@ -12,7 +12,7 @@
     local_action: shell ssh-keygen -P {{ca_pass}} -s /usr/local/etc/ansible_files/host_ca -V +53w1d -I {{ansible_nodename}} -n {{ansible_nodename}} -h /usr/local/etc/ansible_files/ssh/{{ansible_nodename}}_rsa.pub
 
   - name: Generate ECDSA host certificate
-    local_action: shell ssh-keygen -P {{ca_pass}} -s /usr/local/etc/ansible_files/host_ca -V +53w1d -I {{ansible_nodename}} -n {{ansible_nodename}} -h /usr/local/etc/ansible_files/files/ssh/{{ansible_nodename}}_ecdsa.pub
+    local_action: shell ssh-keygen -P {{ca_pass}} -s /usr/local/etc/ansible_files/host_ca -V +53w1d -I {{ansible_nodename}} -n {{ansible_nodename}} -h /usr/local/etc/ansible_files/ssh/{{ansible_nodename}}_ecdsa.pub
 
   - name: Generate ED25519 host certificate
     local_action: shell ssh-keygen -P {{ca_pass}} -s /usr/local/etc/ansible_files/host_ca -V +53w1d -I {{ansible_nodename}} -n {{ansible_nodename}} -h /usr/local/etc/ansible_files/ssh/{{ansible_nodename}}_ed25519.pub
