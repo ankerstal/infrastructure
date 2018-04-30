@@ -1,6 +1,6 @@
 # {{ansible_managed}}
-# FIXME, remove this special case.
 {% if ansible_hostname == "core" %}  
+# FIXME, remove this special case.
 ListenAddress 172.31.20.171
 {% endif %}  
 LogLevel VERBOSE
