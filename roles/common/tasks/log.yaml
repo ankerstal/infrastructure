@@ -1,0 +1,38 @@
+  - name: create all.log
+    file:
+      path: /var/log/all.log
+      owner: root
+      group: wheel
+      state: touch
+      mode: 0600
+      
+
+  - name: enable all.log
+    lineinfile: dest=/etc/syslog.conf regexp=all\.log line='*.*                                             /var/log/all.log'
+    notify: restart syslogd
+    
+  - name: rotate all logs
+    lineinfile: 
+      path: /etc/newsyslog.conf
+      regexp: '^\/var\/log\/all.log'
+      line: '/var/log/all.log                        600  20    20480 *  J'
+
+  - name: enable logging to loghost
+    lineinfile: dest=/etc/syslog.conf regexp=loghost line='*.*                                             @{{ loghost }}'
+    when:  "'home' in group_names"
+    notify: restart syslogd
+    
+  - name: ensure beats installed
+    pkgng: name=beats state=present
+    
+  - name: configure filebeat
+    template: src=templates/usr/local/etc/filebeat.yml dest=/usr/local/etc/filebeat.yml mode=0755
+    notify: restart filebeat 
+    when: filebeat
+    
+  - name: enable filebeat
+    service:
+      name: filebeat
+      enabled: yes
+    notify: restart filebeat
+    when: filebeat

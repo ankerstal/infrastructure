@@ -1,0 +1,37 @@
+mydomain = {{ ansible_nodename }}
+myorigin = $mydomain
+inet_protocols = all
+smtp_bind_address6 = {{ ansible_xn0.ipv6[0].address }}
+smtpd_recipient_restrictions = permit_mynetworks,
+        reject_unauth_destination,
+        check_sender_access regexp:/usr/local/etc/postfix/sender_access
+relay_domains = {{relay_domains|join(',')}}
+relay_recipient_maps =
+
+setgid_group = maildrop
+queue_directory = /var/spool/postfix
+mail_owner = postfix
+
+postscreen_dnsbl_threshold = 1
+postscreen_dnsbl_sites = zen.spamhaus.org*2
+        bl.spamcop.net*1
+postscreen_dnsbl_action = enforce
+postscreen_greet_action = enforce
+
+tls_random_source = dev:/dev/urandom
+
+smtp_use_tls = yes
+smtpd_use_tls = yes
+smtp_tls_CAfile = /usr/local/share/certs/ca-root-nss.crt
+smtp_dns_support_level = dnssec
+smtp_tls_security_level = dane
+smtp_tls_note_starttls_offer = yes
+smtpd_tls_key_file = /usr/local/etc/letsencrypt/live/{{ ansible_nodename }}/privkey.pem
+smtpd_tls_cert_file = /usr/local/etc/letsencrypt/live/{{ ansible_nodename }}/cert.pem
+smtpd_tls_CAfile = /usr/local/etc/letsencrypt/live/{{ ansible_nodename }}/chain.pem
+smtpd_tls_loglevel = 1
+smtp_tls_loglevel = 1
+smtpd_tls_received_header = yes
+smtpd_tls_session_cache_timeout = 3600s
+smtpd_tls_mandatory_protocols = !SSLv2, !SSLv3
+smtpd_tls_protocols = !SSLv2, !SSLv3

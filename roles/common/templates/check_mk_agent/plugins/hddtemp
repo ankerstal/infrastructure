@@ -1,0 +1,10 @@
+#!/bin/sh
+HDDS="/dev/ada0 /dev/ada1 /dev/ada2"
+echo '<<<hddtemp>>>'
+for disk in $HDDS
+do
+model=`smartctl -a $disk | grep "Device Model"|awk '{print $3" "$4}'`
+temp=`smartctl -a $disk | grep Temperature_Celsius | awk '{print $10}'`
+echo -n "|$disk|Seagate|$temp|C|"
+done
+echo

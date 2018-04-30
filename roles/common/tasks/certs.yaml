@@ -1,0 +1,50 @@
+  - name: ensure certbot installed
+    pkgng: name=py27-certbot state=present
+    
+  - name: get certificate on webserver
+    shell: certbot certonly -n -d {{ ([item.name] + item.alt_names|default([]))|join(',') }} --agree-tos --no-eff --email {{ admin_email }} --standalone --expand --pre-hook 'service apache24 stop' --post-hook 'service apache24 start'
+    with_items: "{{ certs }}"
+    register: newcert
+    notify: restart tls services
+    when: apache_server
+
+  - name: get certificate on non-webserver
+    shell: certbot certonly -n -d {{ ([item.name] + item.alt_names|default([]))|join(',') }} --agree-tos --no-eff --email {{ admin_email }} --standalone --expand
+    with_items: "{{ certs }}"
+    register: newcert
+    notify: restart tls services
+    when: not apache_server
+
+  - name: Get the certificate sha256 hash
+    shell: openssl x509 -outform DER -in /usr/local/etc/letsencrypt/live/{{ item.name }}/cert.pem | sha256
+    with_items: "{{ certs }}"
+    register: sha256hash
+
+  - name: save the certificate sha256 hash
+    local_action: copy content="{{ item.stdout }}" dest=/usr/local/etc/ansible_files/certs/{{ item.item.name }}_tlsa.256
+    with_items: "{{sha256hash.results}}"
+
+  - name: get the certificate sha512 hash
+    shell: openssl x509 -outform DER -in /usr/local/etc/letsencrypt/live/{{ item.name }}/cert.pem | sha512
+    with_items: "{{ certs }}"
+    register: sha512hash
+    
+  - name: save the certificate sha512 hash
+    local_action: copy content="{{ item.stdout }}" dest=/usr/local/etc/ansible_files/certs/{{ item.item.name }}_tlsa.512
+    with_items: "{{sha512hash.results}}"
+
+  - name: add TLSA services to DNS
+    include: tlsa.yaml                                                                                                                                                                
+    with_items: "{{ certs  }}"                                                                                                                                                              
+    loop_control:                                                                                                                                                                           
+      loop_var: cert
+    tags: tlsa
+
+  - meta: flush_handlers
+
+  - name: Verify TLSA in DNS
+    include: verify_tlsa.yaml
+    with_items: "{{ certs  }}"
+    loop_control:
+      loop_var: cert
+    tags: tlsa

@@ -1,0 +1,39 @@
+  - name: ensure py-openssl installed
+    pkgng: name=py27-openssl state=present
+
+  - name: Generate private key
+    openssl_privatekey:
+      path: /etc/ssl/{{ ansible_nodename }}.key
+
+  - name: Generate certificate request
+    openssl_csr:
+      privatekey_path: /etc/ssl/{{ ansible_nodename }}.key
+      path: /etc/ssl/{{ ansible_nodename }}.csr
+      country_name: SE
+      organization_name: PeanOrg
+      state_or_province_name: Upland
+      common_name: "{{ ansible_nodename }}"
+      extended_key_usage:
+        - clientAuth
+  - name: Fetch CSR from node
+    fetch:
+      src: /etc/ssl/{{ ansible_nodename }}.csr
+      dest: /usr/local/etc/ansible_files/tls/csr/{{ ansible_nodename }}.csr
+      flat: yes
+
+  - name: Sign certificate with Intermediate CA 1
+    local_action: command openssl ca -config /usr/local/etc/ssl_ca/intermediate/openssl.cnf -extensions usr_cert -days 120 -notext -md sha256 -in /usr/local/etc/ansible_files/tls/csr/{{ ansible_nodename }}.csr -out /usr/local/etc/ansible_files/tls/crt/{{ ansible_nodename }}.cert.pem -passin pass:{{ssl_ca_pass}} -batch
+
+  - name: Upload certificate
+    copy:
+      src: /usr/local/etc/ansible_files/tls/crt/{{ ansible_nodename }}.cert.pem
+      dest: /etc/ssl/{{ ansible_nodename }}.cert.pem
+      owner: root
+      mode: 0644
+  
+  - name: Upload CA chain
+    copy:
+      src: /usr/local/etc/ssl_ca/chain.pem
+      dest: /etc/ssl/chain.pem
+      mode: 0644
+      

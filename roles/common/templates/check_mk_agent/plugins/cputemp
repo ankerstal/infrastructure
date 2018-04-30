@@ -1,0 +1,24 @@
+# Fetches CPU temperature on FreeBSD systems. You need to have kernel
+# support via amdtemp(4) or cputemp(4) kernel modules
+#
+
+#!/bin/sh
+echo '<<<cputemp>>>'
+
+NCPU=`sysctl -n kern.smp.cpus`
+CPU=$(( $NCPU - 1 ))
+
+NTEMP=`sysctl hw.acpi.thermal|grep temperature|wc -l`
+TEMP=$(( $NTEMP - 1 ))
+for i in `seq 0 $CPU`
+do
+        cputemp=`sysctl -n dev.cpu.$i.temperature | cut -c 1-2`
+        echo -n "|cpu$i|$cputemp|"
+done
+
+#for i in `seq 0 $TEMP`
+#do
+#	temp=`sysctl -n hw.acpi.thermal.tz$i.temperature | cut -c 1-4`
+#	echo -n "|ambient$i|$temp|"
+#done
+echo 

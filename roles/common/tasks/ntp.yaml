@@ -1,0 +1,12 @@
+  - name: Create logdir
+    file: path=/var/log/ntp state=directory mode=0755
+
+  - name: write ntp.conf
+    template: src=templates/etc/ntp.conf dest=/etc/ntp.conf mode=644 owner=root group=wheel
+    notify: restart ntpd
+
+  - name: enable ntpd
+    service:
+      name: ntpd
+      enabled: yes
+    notify: restart ntpd

@@ -1,0 +1,7 @@
+  - name: Write wpa_supplicant.conf
+    template:
+      src=templates/wpa_supplicant.conf
+      dest=/etc/wpa_supplicant.conf
+      mode=640
+      owner=root
+      group=wheel

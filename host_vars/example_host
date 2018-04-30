@@ -1,0 +1,20 @@
+apache_server: true
+postfix_server: true
+dovecot_server: true
+filebeat: true
+certs:
+  - name: domain1.example.com
+    alt_names:
+      - mail.example.com
+      - test.example.com
+    tlsa:
+      - { proto: tcp, port: 443 }
+      - { proto: tcp, port: 25 }
+      - { proto: tcp, port: 993 }
+      - { proto: tcp, port: 587 }
+
+  - name: web.com
+    alt_names:
+      - www.web.com
+    tlsa:
+      - { proto: tcp, port: 443 }

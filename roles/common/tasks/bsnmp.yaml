@@ -1,0 +1,16 @@
+  - name: ensure bsnmp-ucd installed
+    pkgng: name=bsnmp-ucd state=present
+
+  - name: get location
+    shell: fetch http://169.254.169.254/latest/meta-data/placement/availability-zone -o-
+    register: location
+
+  - name: write snmp config
+    template: src=templates/etc/snmpd.config dest=/etc/snmpd.config mode=640 owner=root group=wheel
+    notify: restart bsnmpd
+
+  - name: enable snmpd
+    service:
+      name: bsnmpd
+      enabled: yes
+    notify: restart bsnmpd

@@ -1,0 +1,24 @@
+ - include: bootstrap.yaml
+   tags: bootstrap
+
+ - include: pkg.yaml
+   tags: pkg
+
+ - include: certs.yaml
+   tags: certs
+   when: certs is defined
+
+ - include: ntp.yaml
+   tags: ntp
+
+ - include: ssh.yaml
+   tags: ssh
+
+ - include: bsnmp.yaml
+   tags: snmp
+
+ - include: check_mk.yaml
+   tags: check_mk
+
+ - include: log.yaml
+   tags: log

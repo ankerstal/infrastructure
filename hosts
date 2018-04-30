@@ -1,0 +1,27 @@
+#Grouping example
+[aws:children]
+  us-east
+  eu-west
+
+[us-east]
+
+[eu-west]
+
+
+
+# mail and dns master
+[master]
+
+# mail and dns slaves
+[slaves]
+
+
+# NTP servers
+[ntpserver]
+
+# NTP peers
+[ntppeers]
+
+# Machines at home
+[home]
+

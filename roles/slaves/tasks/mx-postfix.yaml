@@ -1,0 +1,20 @@
+ - name: Ensure postfix installed
+   pkgng:
+     name: postfix
+     state: present
+
+ - name: enable postfix
+   service:
+     name: postfix
+     enabled: yes
+
+ - name: write postfix configs
+   template: src={{item.src}} dest={{item.dest}} mode={{item.mode}}
+   with_items:
+     - { src: 'templates/master.cf', dest: '/usr/local/etc/postfix/master.cf', mode: '0755' }
+     - { src: 'templates/main.cf', dest: '/usr/local/etc/postfix/main.cf', mode: '0755' }
+   notify: restart postfix
+
+ - name: write sender_access
+   template: src=templates/sender_access dest=/usr/local/etc/postfix/sender_access mode=0755
+   notify: generate sender_access

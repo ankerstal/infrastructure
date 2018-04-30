@@ -1,0 +1,26 @@
+  - name: create directories
+    file: path=/root/check_mk_agent state=directory mode=0755
+    file: path=/root/check_mk_agent/plugins state=directory mode=0755
+
+# FIXME fix this special case
+  - name: ensure php56 installed
+    pkgng: name=php56 state=present
+    when:  "'system' not in ansible_nodename"
+
+  - name: create plugins
+    template: src={{item.src}} dest={{item.dest}} mode={{item.mode}}
+    with_items:
+      - { src: 'templates/check_mk', dest: '/root/check_mk', mode: '0755' }
+      - { src: 'templates/check_mk_agent/plugins/ntpd', dest: '/root/check_mk_agent/plugins/ntpd', mode: '755'}
+
+  - name: add check_mk as service
+    lineinfile: dest=/etc/services regexp=^check_mk line='check_mk        6556/tcp'
+
+  - name: config inetd
+    lineinfile: dest=/etc/inetd.conf regexp=^check_mk line='check_mk  stream  tcp nowait  root  /root/check_mk       check_mk_agent'
+
+  - name: enable inetd
+    service:
+      name: inetd
+      enabled: yes
+    notify: restart inetd

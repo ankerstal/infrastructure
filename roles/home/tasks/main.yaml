@@ -1,0 +1,8 @@
+ - include: lldp.yaml
+   tags: lldp
+
+ - include: cert.yaml
+   tags: cert
+
+ - include: supplicant.yaml
+   tags: supplicant

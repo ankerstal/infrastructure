@@ -1,0 +1,8 @@
+  - name: ensure lldpd installed
+    pkgng: name=openlldp state=present
+
+  - name: enable lldpd
+    service:
+      name: lldpd
+      enabled: yes
+    notify: restart lldpd

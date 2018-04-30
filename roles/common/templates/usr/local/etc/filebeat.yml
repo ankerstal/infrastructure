@@ -1,0 +1,23 @@
+name: "{{ ansible_nodename }}"
+fields_under_root: true
+filebeat.prospectors:
+- input_type: log
+  paths:
+    - /var/log/all.log*
+  fields:
+    type: all
+  fields_under_root: true
+- input_type: log
+  paths: /var/log/sites/*
+  fields:
+    type: apache
+  fields_under_root: true
+ 
+logging.to_files: true
+logging.files:
+  path: /var/log/
+  name: filebeat
+  keepfiles: 7
+ 
+output.logstash:
+  hosts: ["{{ logstash_host }}:5044"]

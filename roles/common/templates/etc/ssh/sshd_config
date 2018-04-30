@@ -1,0 +1,28 @@
+# {{ansible_managed}}
+# FIXME, remove this special case.
+{% if ansible_hostname == "core" %}  
+ListenAddress 172.31.20.171
+{% endif %}  
+LogLevel VERBOSE
+AuthorizedKeysFile /etc/ssh/keys/%u
+TrustedUserCAKeys /etc/ssh/user_ca.pub
+PermitRootLogin no
+MaxAuthTries 16
+Subsystem	sftp	/usr/local/libexec/sftp-server
+HostCertificate /etc/ssh/ssh_host_rsa_key-cert.pub
+HostCertificate /etc/ssh/ssh_host_ecdsa_key-cert.pub
+HostCertificate /etc/ssh/ssh_host_ed25519_key-cert.pub
+
+Match Address {{ssh_authorized_hosts|join(',')}}
+PermitRootLogin yes
+{% if duo_security == "yes" %}
+Match Address *,!{{ssh_authorized_hosts|join(',!')}}
+ForceCommand /usr/local/sbin/login_duo
+{% endif %}
+
+{% if ssh_chroot %}
+Match User {{ssh_chroot_user}}
+  ChrootDirectory /home/{{ssh_chroot_user}}
+  X11Forwarding no
+  AllowTcpForwarding no
+{% endif %}

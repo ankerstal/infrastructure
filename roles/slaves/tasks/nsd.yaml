@@ -1,0 +1,36 @@
+ - name: gather facts from master
+   setup:
+   delegate_to: "{{item}}"
+   delegate_facts: True
+   with_items: "{{groups['jailmaster']}}"
+
+ - name: Ensure nsd installed
+   pkgng:
+     name: nsd
+     state: present
+
+ - name: enable nsd
+   service:
+     name: nsd
+     enabled: yes
+
+ - name: ensure nsd dir exists
+   file:
+     path: /usr/local/etc/nsd
+     state: directory
+     mode: 0755
+     owner: nsd
+
+ - name: ensure nsd/zones dir exists
+   file:
+     path: /usr/local/etc/nsd/zones
+     state: directory
+     mode: 0755
+
+ - name: write nsd.conf
+   template:
+     src: templates/nsd.conf
+     dest: /usr/local/etc/nsd/nsd.conf 
+     validate: /usr/local/sbin/nsd-checkconf %s
+     backup: yes
+   notify: restart nsd

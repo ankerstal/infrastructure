@@ -1,0 +1,49 @@
+  - name: restart inetd
+    service: name=inetd state=restarted
+
+  - name: restart sshd
+    service: name=openssh state=restarted
+
+  - name: restart syslogd
+    service: name=syslogd state=restarted
+
+  - name: restart bsnmpd
+    service: name=bsnmpd state=restarted
+
+  - name: restart lldpd
+    service: name=lldpd state=restarted
+
+  - name: restart ntpd
+    service: name=ntpd state=restarted
+
+  - name: restart filebeat
+    service: name=filebeat state=restarted
+
+  - name: restart postfix
+    service: name=postfix state=restarted
+    when: postfix_server
+    listen: "restart tls services"
+
+  - name: restart dovecot
+    service: name=dovecot state=restarted
+    when: dovecot_server
+    listen: "restart tls services"
+
+  - name: restart apache
+    service: name=apache24 state=restarted
+    when: apache_server
+    listen: "restart tls services"
+
+# Ugly hack to notify master about changes
+  - name: resign zones
+    shell: ods-signer sign --all
+    listen: "updated zone on master"
+    delegate_to: "{{item}}"
+    with_items: "{{groups['master']}}"
+
+  - name: restart nsd on master
+    shell: nsd-control reload
+    listen: "updated zone on master"
+    delegate_to: "{{item}}"
+    with_items: "{{groups['master']}}"
+

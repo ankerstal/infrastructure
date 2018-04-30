@@ -1,0 +1,95 @@
+  - include_vars: vars/vault
+  - name: Download public RSA key
+    local_action: copy content="ssh-rsa {{ ansible_ssh_host_key_rsa_public }} root@{{ansible_nodename}}" dest=/usr/local/etc/ansible_files/ssh/{{ansible_nodename}}_rsa.pub
+
+  - name: Download public ECDSA key
+    local_action: copy content="ecdsa-sha2-nistp256 {{ ansible_ssh_host_key_ecdsa_public }} root@{{ansible_nodename}}" dest=/usr/local/etc/ansible_files/ssh/{{ansible_nodename}}_ecdsa.pub
+
+  - name: Download public ED25519 key
+    local_action: copy content="ssh-ed25519 {{ ansible_ssh_host_key_ed25519_public }} root@{{ansible_nodename}}" dest=/usr/local/etc/ansible_files/ssh/{{ansible_nodename}}_ed25519.pub
+
+  - name: Generate RSA host certificate
+    local_action: shell ssh-keygen -P {{ca_pass}} -s /usr/local/etc/ansible_files/host_ca -V +53w1d -I {{ansible_nodename}} -n {{ansible_nodename}} -h /usr/local/etc/ansible_files/ssh/{{ansible_nodename}}_rsa.pub
+
+  - name: Generate ECDSA host certificate
+    local_action: shell ssh-keygen -P {{ca_pass}} -s /usr/local/etc/ansible_files/host_ca -V +53w1d -I {{ansible_nodename}} -n {{ansible_nodename}} -h /usr/local/etc/ansible_files/files/ssh/{{ansible_nodename}}_ecdsa.pub
+
+  - name: Generate ED25519 host certificate
+    local_action: shell ssh-keygen -P {{ca_pass}} -s /usr/local/etc/ansible_files/host_ca -V +53w1d -I {{ansible_nodename}} -n {{ansible_nodename}} -h /usr/local/etc/ansible_files/ssh/{{ansible_nodename}}_ed25519.pub
+
+  - name: Upload RSA host certificate
+    copy: src=/usr/local/etc/ansible_files/ssh/{{ansible_nodename}}_rsa-cert.pub dest=/etc/ssh/ssh_host_rsa_key-cert.pub owner=root group=wheel mode=0644
+
+  - name: Upload ECDSA host certificate
+    copy: src=/usr/local/etc/ansible_files/ssh/{{ansible_nodename}}_ecdsa-cert.pub dest=/etc/ssh/ssh_host_ecdsa_key-cert.pub owner=root group=wheel mode=0644
+
+  - name: Upload EC25519 host certificate
+    copy: src=/usr/local/etc/ansible_files/ssh/{{ansible_nodename}}_ed25519-cert.pub dest=/etc/ssh/ssh_host_ed25519_key-cert.pub owner=root group=wheel mode=0644
+
+  - name: create link from /usr/local/etc
+    file: src=/etc/ssh dest=/usr/local/etc/ssh owner=root group=wheel state=link
+
+  - name: ensure openssh installed
+    pkgng: name=openssh-portable state=present
+
+  - name: ensure duo installed
+    pkgng: name=duo state=present
+    when: duo_security == "yes"
+    tags: duo
+
+  - name: write login_duo.conf
+    template: src=templates/usr/local/etc/login_duo.conf dest=/usr/local/etc/login_duo.conf owner=root group=wheel mode=0600
+    when: duo_security == "yes"
+    tags: duo
+
+  - name: write user_ca.pub
+    template: src=templates/etc/ssh/user_ca.pub dest=/etc/ssh/user_ca.pub mode=644 owner=root group=wheel
+    notify: restart sshd
+    tags: user_ca
+
+  - name: write sshd_config
+    template:
+      src: templates/etc/ssh/sshd_config
+      dest: /etc/ssh/sshd_config
+      mode: 644
+      owner: root
+      group: wheel
+      validate: /usr/local/sbin/sshd -t -f %s
+      backup: yes
+    notify: restart sshd
+
+  - name: enable openssh
+    service:
+      name: openssh
+      enabled: yes
+  
+  - name: disable sshd
+    service:
+      name: sshd
+      enabled: no
+
+  - name: fetch SSHFP configuration
+    shell: ssh-keygen -r {{ansible_nodename}}.
+    register: sshfp
+    
+  - name: Update SSHFP in DNS
+    blockinfile:
+      marker: "; {mark} SSHFP for {{ansible_nodename}}"
+      path: /usr/local/etc/nsd/zones/{{ ansible_nodename | regex_replace('.*\.(\w+\.\w+)$', '\1') }}
+      block: "{{ sshfp.stdout }}"
+    #validate: /usr/local/sbin/nsd-checkconf %s
+    #Should be changed to be dynamic.
+    delegate_to: "{{item}}"
+    with_items: "{{groups['master']}}"
+    notify: updated zone on master
+
+  - meta: flush_handlers
+
+  # Should use acutal values from ssh connection
+  - name: verify SSHFP in DNS
+    vars:
+      dns: "{{lookup('dig', '{{ ansible_nodename }}/SSHFP', '@1.1.1.1').split(',')}}"
+    assert:
+      msg: "Incorrect SSHFP record"
+      that: "'{{ item | regex_replace('^.*SSHFP (.*)$', '\\1') }}' in dns"
+    with_items: "{{sshfp.stdout_lines}}"

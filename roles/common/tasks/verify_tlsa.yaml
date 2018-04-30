@@ -1,0 +1,19 @@
+---
+  # FIXME: Should use certificate given at connect instead
+  - name: verify SHA256 TLSA in DNS
+    vars:
+      dns: "{{lookup('dig', '_{{ item.port }}._{{ item.proto }}.{{ cert.name }}/TLSA', '@1.1.1.1').split(',')}}"
+    assert:
+      msg: "Incorrect TLSA record for: _{{ item.port }}._{{ item.proto }}.{{ cert.name }}"
+      that: "'3 0 1 {{ lookup('file', '/usr/local/etc/ansible_files/certs/{{ cert.name }}_tlsa.256') }}' in dns"
+    with_items: "{{ cert.tlsa }}"
+    tags: verify_tlsa
+
+  - name: verify SHA512 TLSA in DNS
+    vars:
+      dns: "{{lookup('dig', '_{{ item.port }}._{{ item.proto }}.{{ cert.name }}/TLSA', '@1.1.1.1').split(',')}}"
+    assert:
+      msg: "Incorrect TLSA record for: _{{ item.port }}._{{ item.proto }}.{{ cert.name }}"
+      that: "'3 0 2 {{ lookup('file', '/usr/local/etc/ansible_files/certs/{{ cert.name }}_tlsa.512') }}' in dns"
+    with_items: "{{ cert.tlsa }}"
+    tags: verify_tlsa

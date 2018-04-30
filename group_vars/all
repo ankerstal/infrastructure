@@ -1,0 +1,32 @@
+ansible_python_interpreter: "/usr/local/bin/python2"
+admin_email: ""
+duo_security: false
+duo_security_ikey: "{{ vault_duo_ikey }}"
+duo_security_skey: "{{ vault_duo_skey }}"
+get_cert: false
+broken_pkg: false
+postfix_server: false
+apache_server: false
+dovecot_server: false
+filebeat: false
+loghost: 
+logstash_host:
+snmp_community:
+ssl_ca_pass: ""
+ssh_user_ca: ""
+ssh_authorized_hosts:
+ssh_chroot: false
+ssh_chroot_user: ""
+# List of relay domains
+relay_domains:
+
+# nsd
+nsd_xfr_secret: "{{ vault_nsd_xfr_secret }}"
+nsd_zones:
+
+# List of ntp servers
+ntp_servers:
+  
+
+
+

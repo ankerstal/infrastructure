@@ -1,0 +1,10 @@
+  - name: remove pkg binary
+    file:
+      path: /usr/local/sbin/pkg
+      state: absent
+    register: removedpkg
+    when: broken_pkg == "yes" 
+
+  - name: create link to pkg-static
+    file: src=/usr/local/sbin/pkg-static dest=/usr/local/sbin/pkg owner=root group=wheel state=link
+    when: broken_pkg == "yes"

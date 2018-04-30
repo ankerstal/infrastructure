@@ -1,0 +1,8 @@
+  - name: restart nsd
+    service: name=nsd state=restarted
+
+  - name: restart postfix
+    service: name=postfix state=restarted
+
+  - name: generate sender_access
+    shell: postmap /usr/local/etc/postfix/sender_access
