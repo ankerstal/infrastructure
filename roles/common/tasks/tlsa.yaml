@@ -26,8 +26,7 @@
     regexp: '^_{{ item.port }}\._{{ item.proto }}\.{{ cert.name }}\.\sTLSA\s[0-3]\s[0-3]\s2'
     line: "_{{ item.port }}._{{ item.proto }}.{{ cert.name }}. TLSA 3 0 2 {{ lookup('file', '/usr/local/etc/ansible_files/certs/{{ cert.name }}_tlsa.512') }}"
   with_items: "{{ cert.tlsa }}"
-  delegate_to: "{{item}}"
-  with_items: "{{groups['master']}}"
+  delegate_to: "{{ groups.master[0] }}"
   notify: updated zone on master
     
 - name: add new SHA512 TLSA for certficate alt names
@@ -39,6 +38,5 @@
     - "{{ cert.alt_names }}"
     - "{{ cert.tlsa }}"
   when: cert.alt_names is defined
-  delegate_to: "{{item}}"
-  with_items: "{{groups['master']}}"
+  delegate_to: "{{ groups.master[0] }}"
   notify: updated zone on master
