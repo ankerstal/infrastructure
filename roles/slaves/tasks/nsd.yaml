@@ -2,7 +2,7 @@
    setup:
    delegate_to: "{{item}}"
    delegate_facts: True
-   with_items: "{{groups['jailmaster']}}"
+   with_items: "{{groups['master']}}"
 
  - name: Ensure nsd installed
    pkgng:
