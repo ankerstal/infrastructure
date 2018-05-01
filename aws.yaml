@@ -1,10 +1,9 @@
- - hosts: aws
-   roles: 
-   - common
-  - hosts: master
-   roles:
-   - master
- - hosts: slaves
-   roles: 
-   - slaves
-
+- hosts: aws
+  roles:
+  - common
+- hosts: master
+  roles:
+  - master
+- hosts: slaves
+  roles:
+  - slaves
