@@ -1,0 +1,10 @@
+  - name: Add periodic emails
+    lineinfile:
+      dest=/etc/periodic.conf
+      line: "{{ item }}_output={{ admin_email }}"
+    with_items:
+      - hourly
+      - daily
+      - weekly
+      - monthly
+      - security
