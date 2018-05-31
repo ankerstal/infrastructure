@@ -22,3 +22,6 @@
 
  - include: log.yaml
    tags: log
+
+ - include: periodic.yaml
+   tags: periodic
