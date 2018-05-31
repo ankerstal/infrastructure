@@ -1,3 +1,10 @@
+  - name: Make sure periodic.conf exists
+    file:
+      path: /etc/foo.conf
+      owner: root
+      group: wheel
+      mode: 0640
+      state: touch
   - name: Add periodic emails
     lineinfile:
       dest: /etc/periodic.conf
