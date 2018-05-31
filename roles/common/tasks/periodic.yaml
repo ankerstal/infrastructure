@@ -1,6 +1,6 @@
   - name: Make sure periodic.conf exists
     file:
-      path: /etc/foo.conf
+      path: /etc/periodic.conf
       owner: root
       group: wheel
       mode: 0640
