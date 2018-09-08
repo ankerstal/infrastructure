@@ -1,0 +1,41 @@
+- block:
+  - name: Get the certificate
+    shell: openssl s_client -connect {{cert.name}}:{{item.port}} -servername {{cert.name}} -showcerts | openssl x509 -outform PEM
+    register: pemout
+    with_items: "{{ cert.tlsa }}"
+    when: ( item.port == 443 ) or ( item.port == 993 )
+
+  - name: Get the certificate
+    shell: openssl s_client -connect {{cert.name}}:{{item.port}} -starttls smtp -showcerts | openssl x509 -outform PEM
+    register: pemout2
+    with_items: "{{ cert.tlsa }}"
+    when: ( item.port == 25 ) or ( item.port == 587 )
+
+  - name: save the certificate in PEM format
+    copy: content="{{ item.stdout }}" dest=/tmp/{{cert.name}}_{{item.item.port}}.pem
+    with_items:
+      - "{{ pemout.results }}"
+      - "{{ pemout2.results }}"
+    loop_control:
+      label: "{{ cert.name }} on port {{item.item.port}}"
+    when: item.skipped is not defined
+
+  - name: Verify that an existing certificate was issued by the Let's Encrypt CA and is currently still valid
+    openssl_certificate:
+      path: /tmp/{{cert.name}}_{{item.item.port}}.pem
+      provider: assertonly
+      issuer:
+        O: Let's Encrypt
+      has_expired: False
+      valid_in: 1209600
+      subject_alt_name: "{{ cert.alt_names |default() | map('regex_replace', '(.*)', 'DNS:\\1') | list }} + [ 'DNS:{{ cert.name }}' ]"
+    with_items: 
+      - "{{ pemout.results }}"
+      - "{{ pemout2.results }}"
+    loop_control:
+      label: "{{ cert.name }} on port {{item.item.port }}"
+    when: item.skipped is not defined
+
+  rescue:
+    - name: Report
+      include: report.yaml

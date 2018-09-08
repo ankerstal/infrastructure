@@ -1,0 +1,13 @@
+- name: Email
+  mail:
+    subject: "{{ inventory_hostname }}: {{test_result.msg}}"
+    to: "{{ admin_email }}"
+    body: 'Test failed on {{ inventory_hostname }}: {{test_result.msg}}'
+  delegate_to: "{{ groups.master[0] }}"
+
+- name: Pushover
+  pushover:
+    msg: '{{test_result.msg}} on {{ inventory_hostname }}'
+    app_token: "{{ pushover_token }}"
+    user_key: "{{ pushover_key }}"
+  delegate_to: "{{ groups.master[0] }}"

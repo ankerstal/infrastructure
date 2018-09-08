@@ -1,0 +1,14 @@
+  - name: Test SSH service
+    block:
+      - name: Test SSH service
+        wait_for: 
+          port: 22
+          timeout: 1
+          host: '{{ (ansible_ssh_host|default(ansible_host))|default(inventory_hostname) }}'
+          search_regex: OpenSSH
+        register: test_result
+        connection: local
+
+    rescue:
+      - name: Report
+        include: report.yaml

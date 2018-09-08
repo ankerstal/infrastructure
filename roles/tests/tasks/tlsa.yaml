@@ -1,0 +1,7 @@
+  - name: Verify TLSA in DNS
+    include: verify_tlsa.yaml
+    with_items: "{{ certs  }}"
+    loop_control:
+      loop_var: cert
+    tags: tlsa
+    when: certs is defined

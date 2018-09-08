@@ -1,0 +1,32 @@
+---
+- block:
+  # Non STARTTLS
+  - name: Get the certificate and generate sha256
+    shell: openssl s_client -connect {{cert.name}}:{{item.port}} -servername {{cert.name}} -showcerts | openssl x509 -outform DER | sha256
+    register: sha256t 
+    with_items: "{{ cert.tlsa }}"
+    when: ( item.port == 443 ) or ( item.port == 993 )
+
+  # STARTTLS
+  - name: Get the certificate and generate sha256 2
+    shell: openssl s_client -connect {{cert.name}}:{{item.port}} -starttls smtp -showcerts | openssl x509 -outform DER | sha256
+    register: sha256
+    with_items: "{{ cert.tlsa }}"
+    when: ( item.port == 25 ) or ( item.port == 587 )
+
+  - name: Verify sha256 hash in dns
+    vars:
+      dns: "{{lookup('dig', '_{{ item.item.port }}._{{ item.item.proto }}.{{ cert.name }}/TLSA', '@1.1.1.1').split(',')}}"
+    assert:
+      that: "'3 0 1 {{ item.stdout }}' in dns"
+      msg: "HAHA"
+    with_items:
+      - "{{ sha256t.results }}"
+      - "{{ sha256.results }}"
+    loop_control:
+      label: "{{ cert.name }} on port {{item.item.port}}"
+    when: item.skipped is not defined
+
+  rescue:
+    - name: Report
+      include: report.yaml 

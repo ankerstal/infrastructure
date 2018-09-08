@@ -1,0 +1,7 @@
+  - name: Verify certificate 
+    include: cert.yaml
+    with_items: "{{ certs }}"
+    loop_control:
+      loop_var: cert
+    delegate_to: "{{ groups.master[0] }}"
+    when: certs is defined

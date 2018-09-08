@@ -1,0 +1,14 @@
+ - include: ssh.yaml
+   tags: test_ssh
+
+ - include: submission.yaml
+   tags: test_submission
+
+ - include: smtp.yaml
+   tags: test_smtp
+
+ - include: certs.yaml
+   tags: certs
+
+ - include: tlsa.yaml
+   tags: tlsa

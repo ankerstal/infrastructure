@@ -1,0 +1,17 @@
+- block:
+
+  - name: Test Submission service
+    wait_for: 
+      port: 587
+      host: '{{ (ansible_ssh_host|default(ansible_host))|default(inventory_hostname) }}'
+      search_regex: 'ESMTP Postfix'
+      timeout: 10
+    connection: local
+    register: test_result
+    when: 
+      - postfix_server 
+      - certs is defined
+      - "587 in lookup('flattened', certs)"
+  rescue:
+    - name: Report
+      include: report.yaml
