@@ -1,0 +1,95 @@
+  - name: Ensure ACME account key
+    copy: content="{{ letsencrypt_account_key }}" dest=/etc/ssl/acme_account.key mode=0600
+
+  - name: Generate private key
+    openssl_privatekey:
+      path: /etc/ssl/{{ item.name }}.key
+    with_items: "{{ certs }}"
+
+  - name: Create Certificate request
+    openssl_csr:
+      path: /etc/ssl/{{ item.name }}.csr
+      privatekey_path: /etc/ssl/{{ item.name }}.key
+      common_name: "{{ item.name }}"
+      subject_alt_name: "{{ item.alt_names|map('regex_replace', '^', 'DNS:')|join(',') }}"
+    with_items: "{{ certs }}"
+
+  - name: Create ACME challenge
+    acme_certificate:
+      account_key_content: "{{ letsencrypt_account_key }}"
+      account_email: "{{ admin_email }}"
+      src: /etc/ssl/{{ item.name }}.csr
+      cert: /etc/ssl/{{ item.name }}.crt
+      challenge: dns-01
+      acme_directory: https://acme-v01.api.letsencrypt.org/directory
+      remaining_days: 30
+    register: challenge
+    with_items: "{{ certs }}"
+
+  - name: Certloop
+    include: acme_validation.yaml 
+    with_items: "{{challenge.results}}"
+    loop_control:
+      loop_var: cert
+    when: challenge.changed
+
+  - meta: flush_handlers
+ 
+  - name: Wait for DNS to propagate
+    pause:
+      seconds: 20 
+    when: challenge.changed
+
+  - name: Let the challenge be validated and retrieve the cert and intermediate certificate
+    acme_certificate:
+      account_key_content: "{{ letsencrypt_account_key }}"
+      account_email: "{{ admin_email )}}"
+      src: /etc/ssl/{{ item.name }}.csr
+      cert: /etc/ssl/{{ item.name }}.crt
+      fullchain: /etc/ssl/{{ item.name }}-fullchain.crt
+      chain: /etc/ssl/{{ item.name }}-chain.crt
+      challenge: dns-01
+      acme_directory: https://acme-v01.api.letsencrypt.org/directory
+      remaining_days: 30
+      data: "{{ challenge }}"
+    with_items: "{{ certs }}"
+    notify: restart tls services
+    when: challenge.changed
+   
+  - name: Get the certificate sha256 hash
+    shell: openssl x509 -outform DER -in /etc/ssl/{{ item.name }}.crt | sha256
+    with_items: "{{ certs }}"
+    register: sha256hash
+    when: challenge.changed
+
+  - name: save the certificate sha256 hash
+    local_action: copy content="{{ item.stdout }}" dest=/usr/local/etc/ansible_files/certs/{{ item.item.name }}_tlsa.256
+    with_items: "{{sha256hash.results}}"
+    when: challenge.changed
+
+  - name: get the certificate sha512 hash
+    shell: openssl x509 -outform DER -in /etc/ssl/{{ item.name }}.crt | sha512
+    with_items: "{{ certs }}"
+    register: sha512hash
+    when: challenge.changed   
+  - name: save the certificate sha512 hash
+    local_action: copy content="{{ item.stdout }}" dest=/usr/local/etc/ansible_files/certs/{{ item.item.name }}_tlsa.512
+    with_items: "{{sha512hash.results}}"
+    when: challenge.changed
+
+  - name: add TLSA services to DNS
+    include: tlsa.yaml
+    with_items: "{{ certs  }}"
+    loop_control:
+      loop_var: cert
+    tags: tlsa
+    when: challenge.changed
+
+  - meta: flush_handlers
+   
+  - name: Verify TLSA in DNS
+    include: verify_tlsa.yaml
+    with_items: "{{ certs  }}"
+    loop_control:
+      loop_var: cert
+    tags: tlsa

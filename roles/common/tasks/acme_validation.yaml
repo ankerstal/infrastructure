@@ -1,0 +1,8 @@
+  - name: Create DNS validation record
+    lineinfile:
+      path: /usr/local/etc/nsd/zones/{{ item.key | regex_replace('.*\.(\w+\.\w+)$', '\1')}}
+      regexp: '^{{ item.key }}'
+      line: "{{ item.key }}. IN TXT {{ item.value[0] | regex_replace('^(.*)$', '\"\\1\"') }}"
+    with_dict: "{{cert.challenge_data_dns}}"
+    delegate_to: "{{ groups.master[0] }}"
+    notify: updated zone on master

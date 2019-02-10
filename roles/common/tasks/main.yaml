@@ -4,8 +4,8 @@
  - include: pkg.yaml
    tags: pkg
 
- - include: certs.yaml
-   tags: certs
+ - include: letsencrypt.yaml
+   tags: letsencrypt
    when: certs is defined
 
  - include: ntp.yaml
