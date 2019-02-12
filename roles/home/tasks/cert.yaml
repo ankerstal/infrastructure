@@ -21,13 +21,23 @@
       dest: /usr/local/etc/ansible_files/tls/csr/{{ ansible_nodename }}.csr
       flat: yes
 
-  - name: Sign certificate with Intermediate CA 1
-    local_action: command openssl ca -config /usr/local/etc/ssl_ca/intermediate/openssl.cnf -extensions usr_cert -days 120 -notext -md sha256 -in /usr/local/etc/ansible_files/tls/csr/{{ ansible_nodename }}.csr -out /usr/local/etc/ansible_files/tls/crt/{{ ansible_nodename }}.cert.pem -passin pass:{{ssl_ca_pass}} -batch
+  - name: Sign client certificate with Intermediate CA 1
+    local_action: command openssl ca -config /usr/local/etc/ssl_ca/intermediate/openssl.cnf -extensions usr_cert -days 120 -notext -md sha256 -in /usr/local/etc/ansible_files/tls/csr/{{ ansible_nodename }}.csr -out /usr/local/etc/ansible_files/tls/crt/{{ ansible_nodename }}.client_cert.pem -passin pass:{{ssl_ca_pass}} -batch
 
-  - name: Upload certificate
+  - name: Sign server certificate with Intermediate CA 1
+    local_action: command openssl ca -config /usr/local/etc/ssl_ca/intermediate/openssl.cnf -extensions server_cert -days 120 -notext -md sha256 -in /usr/local/etc/ansible_files/tls/csr/{{ ansible_nodename }}.csr -out /usr/local/etc/ansible_files/tls/crt/{{ ansible_nodename }}.server_cert.pem -passin pass:{{ssl_ca_pass}} -batch
+
+  - name: Upload client certificate
     copy:
-      src: /usr/local/etc/ansible_files/tls/crt/{{ ansible_nodename }}.cert.pem
-      dest: /etc/ssl/{{ ansible_nodename }}.cert.pem
+      src: /usr/local/etc/ansible_files/tls/crt/{{ ansible_nodename }}.client_cert.pem
+      dest: /etc/ssl/{{ ansible_nodename }}.client_cert.pem
+      owner: root
+      mode: 0644
+
+  - name: Upload server certificate
+    copy:
+      src: /usr/local/etc/ansible_files/tls/crt/{{ ansible_nodename }}.server_cert.pem
+      dest: /etc/ssl/{{ ansible_nodename }}.server_cert.pem
       owner: root
       mode: 0644
   
