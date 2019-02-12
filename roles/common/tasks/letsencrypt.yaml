@@ -27,7 +27,7 @@
     with_items: "{{ certs }}"
 
   - name: Certloop
-    include: acme_validation.yaml 
+    include_tasks: acme_validation.yaml
     with_items: "{{challenge.results}}"
     loop_control:
       loop_var: cert
@@ -78,7 +78,7 @@
     when: challenge.changed
 
   - name: add TLSA services to DNS
-    include: tlsa.yaml
+    include_tasks: tlsa.yaml
     with_items: "{{ certs  }}"
     loop_control:
       loop_var: cert
@@ -88,7 +88,7 @@
   - meta: flush_handlers
    
   - name: Verify TLSA in DNS
-    include: verify_tlsa.yaml
+    include_tasks: verify_tlsa.yaml
     with_items: "{{ certs  }}"
     loop_control:
       loop_var: cert
